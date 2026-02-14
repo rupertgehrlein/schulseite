@@ -1,0 +1,29 @@
+name: Build and Deploy Angular
+on:
+  push:
+    branches:
+      - main  # Oder 'master', falls dein Hauptbranch so heißt
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/checkout@v4
+        with:
+          node-version: '20' # Nutze die Version, die du auch lokal hast
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Angular App
+        run: npx ng build --base-href "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist/${{ github.event.repository.name }}/browser # Pfad prüfen (s. unten!)
+          branch: gh-pages

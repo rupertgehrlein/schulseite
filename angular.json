@@ -27,11 +27,13 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              }
+              },
+              "src/assets"
             ],
             "styles": [
               "src/styles.scss"
-            ]
+            ],
+        "externalDependencies": ["fs", "path", "crypto"]
           },
           "configurations": {
             "production": {
