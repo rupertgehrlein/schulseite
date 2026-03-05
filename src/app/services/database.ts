@@ -1431,7 +1431,7 @@ INSERT INTO UserFollows VALUES (24, 100);
     this.db.run(sql);
   }
 
-  // Methode zum Ausführen von Queries (bleibt gleich)
+  
   executeQuery(query: string): any {
     if (!this.db) return null;
     try {
