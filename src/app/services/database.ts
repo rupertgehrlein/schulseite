@@ -6,29 +6,39 @@ declare var initSqlJs: any;
 })
 export class DatabaseService {
   db: any = null;
+  currentScenario: string = ''; // Merkt sich, welche DB gerade läuft
 
   constructor() {}
 
-  async initDatabase(): Promise<void> {
-    if (this.db) return;
+  // Wir übergeben jetzt das gewünschte Szenario!
+  async initDatabase(scenario: 'spotify' | 'murder'): Promise<void> {
+    // Wenn die richtige DB schon geladen ist, mach nichts.
+    if (this.db && this.currentScenario === scenario) return;
 
     try {
       const SQL = await initSqlJs({
         locateFile: (file: string) => `assets/${file}`
       });
       
+      // Alte DB überschreiben, falls eine existierte
       this.db = new SQL.Database();
-      // WICHTIG: Foreign Keys in SQLite aktivieren
       this.db.run("PRAGMA foreign_keys = ON;");
-      this.createTables();
-      console.log("Spotify DB Schema based on ERM created.");
+      this.currentScenario = scenario;
+
+      // Je nach Szenario die richtigen Daten laden
+      if (scenario === 'spotify') {
+        this.seedSpotifyData();
+      } else if (scenario === 'murder') {
+        this.seedMurderData();
+      }
+      
     } catch (err) {
       console.error("Datenbank-Fehler:", err);
       throw new Error("Fehler beim Initialisieren der Datenbank.");
     }
   }
 
-  private createTables() {
+  private seedSpotifyData() {
     const sql = `
       -- 1. Label (Keine Abhängigkeiten)
       CREATE TABLE Label (
@@ -1429,6 +1439,142 @@ INSERT INTO UserFollows VALUES (24, 99);
 INSERT INTO UserFollows VALUES (24, 100);
     `;
     this.db.run(sql);
+  }
+
+  private seedMurderData() {
+    let sql = `
+      -- 1. TABELLEN ERSTELLEN
+      CREATE TABLE Polizeibericht (BerichtID INTEGER PRIMARY KEY, Datum TEXT, Stadt TEXT, Art_des_Verbrechens TEXT, Beschreibung TEXT);
+      CREATE TABLE Person (PersonenID INTEGER PRIMARY KEY, Vorname TEXT, Nachname TEXT, Email TEXT, Geschlecht TEXT, Groesse_cm INTEGER, Haarfarbe TEXT, Strasse TEXT, Hausnummer INTEGER);
+      CREATE TABLE Fahrzeug (FahrzeugID INTEGER PRIMARY KEY, PersonenID INTEGER, Marke TEXT, Farbe TEXT, Kennzeichen TEXT, FOREIGN KEY(PersonenID) REFERENCES Person(PersonenID));
+      CREATE TABLE Transaktion (TransaktionsID INTEGER PRIMARY KEY, PersonenID INTEGER, Datum TEXT, Geschaeft_Name TEXT, Artikel TEXT, Preis REAL, FOREIGN KEY(PersonenID) REFERENCES Person(PersonenID));
+      CREATE TABLE Zeugenaussage (AussageID INTEGER PRIMARY KEY, PersonenID INTEGER, BerichtID INTEGER, Aussage TEXT, FOREIGN KEY(PersonenID) REFERENCES Person(PersonenID), FOREIGN KEY(BerichtID) REFERENCES Polizeibericht(BerichtID));
+      CREATE TABLE Gebaeude_Zugang (LogID INTEGER PRIMARY KEY, PersonenID INTEGER, Raum TEXT, Datum TEXT, Uhrzeit TEXT, FOREIGN KEY(PersonenID) REFERENCES Person(PersonenID));
+    `;
+
+    // HILFSFUNKTIONEN FÜR ZUFALL
+    const rnd = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
+    const rndInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+    // DATEN-POOLS
+    const vornamen = ['Jan', 'Peter', 'Michael', 'Thomas', 'Lisa', 'Sarah', 'Laura', 'Marie', 'Kevin', 'Lukas', 'Emma', 'Julia', 'Leon', 'Paul', 'Felix', 'Max', 'Elias', 'Sophie', 'Mia', 'Noah', 'Lena', 'Finn', 'Anna', 'Tim', 'Lea'];
+    const nachnamen = ['Müller', 'Schmidt', 'Schneider', 'Fischer', 'Weber', 'Meyer', 'Wagner', 'Becker', 'Hoffmann', 'Schäfer', 'Koch', 'Bauer', 'Richter', 'Klein', 'Wolf', 'Schröder', 'Neumann', 'Schwarz', 'Zimmermann'];
+    const strassen = ['Dorfstrasse', 'Bahnhofstrasse', 'Waldweg', 'Ringstrasse', 'Lindenallee', 'Ahornweg', 'Feldweg', 'Hauptstrasse', 'Kastanienallee', 'Birkenweg', 'Bergstrasse', 'Talstrasse'];
+    const farben = ['Rot', 'Blau', 'Silber', 'Grau', 'Weiss', 'Schwarz', 'Grün', 'Gelb'];
+    const marken = ['VW', 'Audi', 'BMW', 'Mercedes', 'Opel', 'Ford', 'Toyota', 'Skoda', 'Tesla', 'Renault', 'Peugeot', 'Fiat'];
+    const artikel = ['Hammer', 'Schraubenzieher', 'Bohrmaschine', 'Kabelbinder', 'Panzertape', 'Glühbirne', 'Batterien', 'Lötkolben', 'Laser-Cutter', 'Schaufel', 'Kettensäge', 'Zollstock', 'Laptop'];
+    const raeume = ['Kantine', 'Büro 1', 'Büro 2', 'Meetingraum', 'Lager', 'Empfang', 'Hochsicherheitslabor', 'Toiletten', 'Serverraum', 'Archiv'];
+    const staedte = ['Neo-Berlin', 'Cyber-City', 'Tech-Town', 'München', 'Hamburg', 'Köln', 'Frankfurt', 'Stuttgart', 'Leipzig'];
+    const verbrechen = ['Fahrraddiebstahl', 'Ruhestörung', 'Falschparker', 'Sachbeschädigung', 'Ladendiebstahl', 'Betrug', 'Körperverletzung', 'Einbruch', 'Taschendiebstahl'];
+    const aussagen = ['Ich habe nichts gesehen.', 'Ich war im Urlaub.', 'Da war ein lauter Knall.', 'Ich habe nur eine dunkle Gestalt gesehen.', 'Ich glaube es war ein rotes Auto.', 'Keine Ahnung.', 'Ich habe geschlafen.', 'Mein Hund hat gebellt.', 'Ich war zur Tatzeit im Kino.', 'Jemand rannte schnell weg.'];
+
+    // ==========================================
+    // GEHEIME IDs FÜR DEN PLOT (Versteckt mitten in den Daten)
+    // ==========================================
+    const plotBerichtID = 1142; // Der Bericht steht in Zeile 142
+    const plotZ1 = 1305;        // Zeuge 1 steht in Zeile 305
+    const plotZ2 = 1844;        // Zeuge 2 steht in Zeile 844
+    const plotTaeter = 1512;    // Der Täter steht in Zeile 512
+    const plotFake1 = 1204;     // Falsche Fährte 1
+    const plotFake2 = 1755;     // Falsche Fährte 2
+
+    // ==========================================
+    // 2. DEN "NOISE" GENERIEREN & PLOT EINFÜGEN
+    // ==========================================
+
+    // --- POLIZEIBERICHTE (ID 1000 - 1500) ---
+    for (let i = 1000; i <= 1500; i++) {
+      if (i === plotBerichtID) {
+        sql += `INSERT INTO Polizeibericht VALUES (${i}, '15.04.2026', 'Cyber-City', 'Industriespionage', 'Einbruch im Hochsicherheitslabor am Vorabend. Prototyp gestohlen. Täter flüchtig. Wir haben zwei Zeugen befragt. Zeuge 1 wohnt in der "Hauptstrasse" Hausnummer 42. Zeuge 2 hat als E-Mail "hacker99@tech-mail.com". Aussagen liegen vor.');\n`;
+      } else {
+        const tag = rndInt(1, 28).toString().padStart(2, '0');
+        const monat = rnd(['01', '02', '03', '04', '05']);
+        const text = `Am ${tag}.${monat}.2026 wurde in ${rnd(staedte)} ein Fall von ${rnd(verbrechen)} gemeldet. ${rnd(['Keine Zeugen.', 'Der Täter entkam.', 'Spuren wurden gesichert.', 'Ermittlungen laufen.', 'Der Verdächtige trug schwarz.'])}`;
+        sql += `INSERT INTO Polizeibericht VALUES (${i}, '${tag}.${monat}.2026', '${rnd(staedte)}', '${rnd(verbrechen)}', '${text}');\n`;
+      }
+    }
+
+    // --- PERSONEN (ID 1000 - 2000) ---
+    for (let i = 1000; i <= 2000; i++) {
+      if (i === plotZ1) {
+        sql += `INSERT INTO Person VALUES (${i}, 'Anna', 'Müller', 'anna.m@web.de', 'W', 165, 'Blond', 'Hauptstrasse', 42);\n`;
+      } else if (i === plotZ2) {
+        sql += `INSERT INTO Person VALUES (${i}, 'Linus', 'Torvalds', 'hacker99@tech-mail.com', 'M', 175, 'Braun', 'Linuxweg', 1);\n`;
+      } else if (i === plotTaeter) {
+        sql += `INSERT INTO Person VALUES (${i}, 'Victor', 'Sterling', 'v.sterling@mail.com', 'M', 188, 'Grau', 'Villenviertel', 1);\n`;
+      } else if (i === plotFake1) {
+        sql += `INSERT INTO Person VALUES (${i}, 'Klaus', 'Kleber', 'k.kleber@mail.com', 'M', 190, 'Blond', 'Waldweg', 12);\n`;
+      } else if (i === plotFake2) {
+        sql += `INSERT INTO Person VALUES (${i}, 'Sabine', 'Sicher', 'sabi@mail.com', 'W', 160, 'Grau', 'Bergstrasse', 4);\n`;
+      } else {
+        const v = rnd(vornamen);
+        const n = rnd(nachnamen);
+        const mail = `${v.toLowerCase()}.${n.toLowerCase()}${rndInt(1,99)}@mail.com`;
+        sql += `INSERT INTO Person VALUES (${i}, '${v}', '${n}', '${mail}', '${rnd(['M', 'W', 'D'])}', ${rndInt(150, 205)}, '${rnd(['Blond', 'Braun', 'Schwarz', 'Grau', 'Rot'])}', '${rnd(strassen)}', ${rndInt(1, 150)});\n`;
+      }
+    }
+
+    // --- ZEUGENAUSSAGEN (ID 1000 - 1500) ---
+    for (let i = 1000; i <= 1500; i++) {
+      if (i === 1142) { // Aussage Zeuge 1
+        sql += `INSERT INTO Zeugenaussage VALUES (${i}, ${plotZ1}, ${plotBerichtID}, 'Ich war am Vorabend gerade am Fenster. Ein schwarzes Auto ist mit quietschenden Reifen davongefahren. Ich habe mir nicht alles gemerkt, aber das Kennzeichen enthielt definitiv "X-99".');\n`;
+      } else if (i === 1337) { // Aussage Zeuge 2
+        sql += `INSERT INTO Zeugenaussage VALUES (${i}, ${plotZ2}, ${plotBerichtID}, 'Ich habe in der Nacht den Alarm gehört und bin auf den Flur gerannt. Da kam mir ein großer Kerl entgegen, bestimmt über 185 cm groß, mit grauen Haaren! Er hatte ein Gerät in der Hand, sah aus wie ein Laser-Cutter.');\n`;
+      } else {
+        sql += `INSERT INTO Zeugenaussage VALUES (${i}, ${rndInt(1000, 2000)}, ${rndInt(1000, 1500)}, '${rnd(aussagen)}');\n`;
+      }
+    }
+
+    // --- FAHRZEUGE (ID 1000 - 2000) ---
+    for (let i = 1000; i <= 2000; i++) {
+      if (i === 1500) {
+        sql += `INSERT INTO Fahrzeug VALUES (${i}, ${plotTaeter}, 'Tesla', 'Schwarz', 'CY-X-994');\n`;
+      } else if (i === 1800) {
+        sql += `INSERT INTO Fahrzeug VALUES (${i}, ${plotFake1}, 'BMW', 'Schwarz', 'B-X-999');\n`;
+      } else if (i === 1900) {
+        sql += `INSERT INTO Fahrzeug VALUES (${i}, ${plotFake2}, 'Audi', 'Schwarz', 'M-X-991');\n`;
+      } else {
+        const kz = `CC-${String.fromCharCode(rndInt(65,90))}${String.fromCharCode(rndInt(65,90))}-${rndInt(100, 999)}`;
+        sql += `INSERT INTO Fahrzeug VALUES (${i}, ${i}, '${rnd(marken)}', '${rnd(farben)}', '${kz}');\n`; 
+      }
+    }
+
+    // --- TRANSAKTIONEN (ID 1000 - 2000) ---
+    for (let i = 1000; i <= 2000; i++) {
+      if (i === 1500) {
+        sql += `INSERT INTO Transaktion VALUES (${i}, ${plotTaeter}, '13.04.2026', 'Tech-World', 'Laser-Cutter', 1499.00);\n`;
+      } else if (i === 1800) {
+        sql += `INSERT INTO Transaktion VALUES (${i}, ${plotFake1}, '13.04.2026', 'Tech-World', 'Lötkolben', 49.00);\n`;
+      } else if (i === 1900) {
+        sql += `INSERT INTO Transaktion VALUES (${i}, ${plotFake2}, '13.04.2026', 'Tech-World', 'Laser-Cutter', 1499.00);\n`;
+      } else {
+        const tag = rndInt(1, 28).toString().padStart(2, '0');
+        sql += `INSERT INTO Transaktion VALUES (${i}, ${rndInt(1000, 2000)}, '${tag}.04.2026', '${rnd(['Tech-World', 'Baumarkt', 'Supermarkt', 'Tankstelle'])}', '${rnd(artikel)}', ${rndInt(5, 500)}.00);\n`;
+      }
+    }
+
+    // --- GEBAEUDE_ZUGANG (ID 1000 - 2000) ---
+    for (let i = 1000; i <= 2000; i++) {
+      if (i === 1500) {
+        sql += `INSERT INTO Gebaeude_Zugang VALUES (${i}, ${plotTaeter}, 'Hochsicherheitslabor', '14.04.2026', '23:42');\n`;
+      } else if (i === 1800) {
+        sql += `INSERT INTO Gebaeude_Zugang VALUES (${i}, ${plotFake1}, 'Hochsicherheitslabor', '14.04.2026', '23:15');\n`;
+      } else if (i === 1900) {
+        sql += `INSERT INTO Gebaeude_Zugang VALUES (${i}, ${plotFake2}, 'Hochsicherheitslabor', '14.04.2026', '08:00');\n`;
+      } else {
+        const tag = rndInt(1, 28).toString().padStart(2, '0');
+        const std = rndInt(0, 23).toString().padStart(2, '0');
+        const min = rndInt(0, 59).toString().padStart(2, '0');
+        sql += `INSERT INTO Gebaeude_Zugang VALUES (${i}, ${rndInt(1000, 2000)}, '${rnd(raeume)}', '${tag}.04.2026', '${std}:${min}');\n`;
+      }
+    }
+
+    try {
+      this.db.run(sql);
+      console.log("Mega Murder Mystery DB mit ~6000 gemischten Datensätzen initialisiert.");
+    } catch (e) {
+      console.error("SQL Fehler:", e);
+    }
   }
 
   

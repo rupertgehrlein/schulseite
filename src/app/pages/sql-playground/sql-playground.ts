@@ -20,8 +20,8 @@ export class SqlPlayground implements OnInit {
 
   async ngOnInit() {
   try {
-    await this.dbService.initDatabase();
-    this.runQuery(); // Erste Abfrage, wenn alles klappt
+    await this.dbService.initDatabase('spotify'); 
+      this.runQuery();
   } catch (e: any) {
     console.error("Datenbank-Fehler:", e);
     this.error = `Kritischer Fehler: Die Datenbank konnte nicht geladen werden. (${e.message || e})`;
