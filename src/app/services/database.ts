@@ -1484,18 +1484,62 @@ INSERT INTO UserFollows VALUES (24, 100);
 
     // --- POLIZEIBERICHTE (ID 1000 - 1500) ---
     for (let i = 1000; i <= 1500; i++) {
-      if (i === plotBerichtID) {
+      
+      // FAKE 1 (Steht ganz oben in den Ergebnissen)
+      if (i === 1023) {
+        sql += `INSERT INTO Polizeibericht VALUES (${i}, '15.04.2026', 'Cyber-City', 'Industriespionage', 'Einbruch im Hochsicherheitslabor am Vorabend. Prototyp gestohlen. Täter flüchtig. Wir haben zwei Zeugen befragt. Zeuge 1 wohnt in der "Nebenstraße" Hausnummer 99. Zeuge 2 hat als E-Mail "ghost@tech-mail.com". Aussagen liegen vor.');\n`;
+      } 
+      // FAKE 2 (Steht als zweites in den Ergebnissen)
+      else if (i === 1089) {
+        sql += `INSERT INTO Polizeibericht VALUES (${i}, '15.04.2026', 'Cyber-City', 'Industriespionage', 'Einbruch am Vorabend. Geheimer Prototyp entwendet. Täter flüchtig. Wir haben zwei Zeugen befragt. Zeuge 1 wohnt in der "Sackgasse" Hausnummer 888. Zeuge 2 hat als E-Mail "nobody@mail.com". Aussagen liegen vor.');\n`;
+      } 
+      // UNSER ECHTER BERICHT (Steht an dritter Stelle!)
+      else if (i === plotBerichtID) {
         sql += `INSERT INTO Polizeibericht VALUES (${i}, '15.04.2026', 'Cyber-City', 'Industriespionage', 'Einbruch im Hochsicherheitslabor am Vorabend. Prototyp gestohlen. Täter flüchtig. Wir haben zwei Zeugen befragt. Zeuge 1 wohnt in der "Hauptstrasse" Hausnummer 42. Zeuge 2 hat als E-Mail "hacker99@tech-mail.com". Aussagen liegen vor.');\n`;
-      } else {
+      } 
+      // FAKE 3 (Steht weiter unten)
+      else if (i === 1204) {
+        sql += `INSERT INTO Polizeibericht VALUES (${i}, '15.04.2026', 'Cyber-City', 'Industriespionage', 'Einbruch in der Entwicklung am Vorabend. Laptops gestohlen. Täter flüchtig. Wir haben zwei Zeugen befragt. Zeuge 1 wohnt in der "Nirgendwoweg" Hausnummer 1. Zeuge 2 hat als E-Mail "fake@tech-mail.com". Aussagen liegen vor.');\n`;
+      } 
+      // FAKE 4 (Noch weiter unten)
+      else if (i === 1345) {
+        sql += `INSERT INTO Polizeibericht VALUES (${i}, '15.04.2026', 'Cyber-City', 'Industriespionage', 'Einbruch im Serverraum am Vorabend. Daten kopiert. Täter flüchtig. Wir haben zwei Zeugen befragt. Zeuge 1 wohnt in der "Mondstrasse" Hausnummer 42. Zeuge 2 hat als E-Mail "hacker00@tech-mail.com". Aussagen liegen vor.');\n`;
+      } 
+      // DER GANZE RESTLICHE ZUFALLS-MÜLL
+      else {
         const tag = rndInt(1, 28).toString().padStart(2, '0');
         const monat = rnd(['01', '02', '03', '04', '05']);
         
-        // HIER IST DER FIX: Wir ziehen die Zufallswerte einmal pro Bericht und speichern sie!
         const zufallsStadt = rnd(staedte);
         const zufallsVerbrechen = rnd(verbrechen);
         
-        const text = `Am ${tag}.${monat}.2026 wurde in ${zufallsStadt} ein Fall von ${zufallsVerbrechen} gemeldet. ${rnd(['Keine Zeugen.', 'Der Täter entkam.', 'Spuren wurden gesichert.', 'Ermittlungen laufen.', 'Der Verdächtige trug schwarz.'])}`;
+        const intro = rnd([
+          `Am ${tag}.${monat}.2026 wurde in ${zufallsStadt} ein Fall von ${zufallsVerbrechen} gemeldet.`,
+          `Einsatz in ${zufallsStadt} wegen ${zufallsVerbrechen} am Vorabend.`,
+          `Die Wache in ${zufallsStadt} nahm eine Anzeige wegen ${zufallsVerbrechen} auf.`,
+          `Tatort ${zufallsStadt}: Schwerer Fall von ${zufallsVerbrechen}.`
+        ]);
+
+        const detail = rnd([
+          `Der Täter entkam unerkannt.`,
+          `Spuren wurden gesichert.`,
+          `Wertgegenstände wurden gestohlen.`,
+          `Täter flüchtig.`,
+          `Eine Fahndung wurde umgehend eingeleitet.`,
+          `Es entstand erheblicher Sachschaden.`
+        ]);
+
+        const zeugen = rnd([
+          `Keine Zeugen vor Ort.`,
+          `Wir haben zwei Zeugen befragt. Zeuge 1 wohnt in der "${rnd(strassen)}".`,
+          `Ein Zeuge mit der E-Mail "${rnd(vornamen).toLowerCase()}@mail.com" meldete sich.`,
+          `Aussagen liegen vor. Ein Zeuge sah ein ${rnd(farben).toLowerCase()}es Fahrzeug.`,
+          `Nachbarschaftsbefragung ergab Hinweise auf einen Täter mit ${rnd(['blond', 'braun', 'schwarz', 'grau'])}en Haaren.`,
+          `Der Vorfall wurde von der Straße aus beobachtet.`,
+          `Wir haben einen Zeugen befragt. Aussagen liegen vor.`
+        ]);
         
+        const text = `${intro} ${detail} ${zeugen}`;
         sql += `INSERT INTO Polizeibericht VALUES (${i}, '${tag}.${monat}.2026', '${zufallsStadt}', '${zufallsVerbrechen}', '${text}');\n`;
       }
     }
