@@ -1464,7 +1464,7 @@ INSERT INTO UserFollows VALUES (24, 100);
     const marken = ['VW', 'Audi', 'BMW', 'Mercedes', 'Opel', 'Ford', 'Toyota', 'Skoda', 'Tesla', 'Renault', 'Peugeot', 'Fiat'];
     const artikel = ['Hammer', 'Schraubenzieher', 'Bohrmaschine', 'Kabelbinder', 'Panzertape', 'Glühbirne', 'Batterien', 'Lötkolben', 'Laser-Cutter', 'Schaufel', 'Kettensäge', 'Zollstock', 'Laptop'];
     const raeume = ['Kantine', 'Büro 1', 'Büro 2', 'Meetingraum', 'Lager', 'Empfang', 'Hochsicherheitslabor', 'Toiletten', 'Serverraum', 'Archiv'];
-    const staedte = ['Neo-Berlin', 'Cyber-City', 'Tech-Town', 'München', 'Hamburg', 'Köln', 'Frankfurt', 'Stuttgart', 'Leipzig'];
+    const staedte = ['Neo-Berlin', 'Cyber-City', 'Tech-Town', 'München', 'Hamburg', 'Köln', 'Offenbach', 'Stuttgart', 'Leipzig'];
     const verbrechen = ['Fahrraddiebstahl', 'Ruhestörung', 'Falschparker', 'Sachbeschädigung', 'Ladendiebstahl', 'Betrug', 'Körperverletzung', 'Einbruch', 'Taschendiebstahl'];
     const aussagen = ['Ich habe nichts gesehen.', 'Ich war im Urlaub.', 'Da war ein lauter Knall.', 'Ich habe nur eine dunkle Gestalt gesehen.', 'Ich glaube es war ein rotes Auto.', 'Keine Ahnung.', 'Ich habe geschlafen.', 'Mein Hund hat gebellt.', 'Ich war zur Tatzeit im Kino.', 'Jemand rannte schnell weg.'];
 
@@ -1489,8 +1489,14 @@ INSERT INTO UserFollows VALUES (24, 100);
       } else {
         const tag = rndInt(1, 28).toString().padStart(2, '0');
         const monat = rnd(['01', '02', '03', '04', '05']);
-        const text = `Am ${tag}.${monat}.2026 wurde in ${rnd(staedte)} ein Fall von ${rnd(verbrechen)} gemeldet. ${rnd(['Keine Zeugen.', 'Der Täter entkam.', 'Spuren wurden gesichert.', 'Ermittlungen laufen.', 'Der Verdächtige trug schwarz.'])}`;
-        sql += `INSERT INTO Polizeibericht VALUES (${i}, '${tag}.${monat}.2026', '${rnd(staedte)}', '${rnd(verbrechen)}', '${text}');\n`;
+        
+        // HIER IST DER FIX: Wir ziehen die Zufallswerte einmal pro Bericht und speichern sie!
+        const zufallsStadt = rnd(staedte);
+        const zufallsVerbrechen = rnd(verbrechen);
+        
+        const text = `Am ${tag}.${monat}.2026 wurde in ${zufallsStadt} ein Fall von ${zufallsVerbrechen} gemeldet. ${rnd(['Keine Zeugen.', 'Der Täter entkam.', 'Spuren wurden gesichert.', 'Ermittlungen laufen.', 'Der Verdächtige trug schwarz.'])}`;
+        
+        sql += `INSERT INTO Polizeibericht VALUES (${i}, '${tag}.${monat}.2026', '${zufallsStadt}', '${zufallsVerbrechen}', '${text}');\n`;
       }
     }
 
@@ -1517,7 +1523,7 @@ INSERT INTO UserFollows VALUES (24, 100);
     // --- ZEUGENAUSSAGEN (ID 1000 - 1500) ---
     for (let i = 1000; i <= 1500; i++) {
       if (i === 1142) { // Aussage Zeuge 1
-        sql += `INSERT INTO Zeugenaussage VALUES (${i}, ${plotZ1}, ${plotBerichtID}, 'Ich war am Vorabend gerade am Fenster. Ein schwarzes Auto ist mit quietschenden Reifen davongefahren. Ich habe mir nicht alles gemerkt, aber das Kennzeichen enthielt definitiv "X-99".');\n`;
+        sql += `INSERT INTO Zeugenaussage VALUES (${i}, ${plotZ1}, ${plotBerichtID}, 'Ich war am Vorabend gerade am Fenster. Ein schwarzes Auto ist mit quietschenden Reifen davongefahren. Ich habe mir nicht alles gemerkt, aber das Kennzeichen enthielt irgendwo definitiv "X-99".');\n`;
       } else if (i === 1337) { // Aussage Zeuge 2
         sql += `INSERT INTO Zeugenaussage VALUES (${i}, ${plotZ2}, ${plotBerichtID}, 'Ich habe in der Nacht den Alarm gehört und bin auf den Flur gerannt. Da kam mir ein großer Kerl entgegen, bestimmt über 185 cm groß, mit grauen Haaren! Er hatte ein Gerät in der Hand, sah aus wie ein Laser-Cutter.');\n`;
       } else {
